@@ -132,3 +132,58 @@ install (
     DESTINATION include
     FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
 )
+
+# ISAMORE LLVM IR generation for FLANN
+if(FLANN_ENABLE_LLVM_IR)
+  # Generate LLVM IR for the main FLANN source files
+  set(FLANN_SOURCES_FOR_IR ${CMAKE_CURRENT_SOURCE_DIR}/flann/flann.cpp ${CMAKE_CURRENT_SOURCE_DIR}/flann/flann_cpp.cpp)
+  
+  # Create custom commands for each source file
+  foreach(source ${FLANN_SOURCES_FOR_IR})
+    get_filename_component(source_name ${source} NAME_WE)
+    set(ll_file "${CMAKE_BINARY_DIR}/llvm/${source_name}.ll")
+    
+    # Include directories
+    set(include_dirs "-I${CMAKE_CURRENT_SOURCE_DIR} -I${CMAKE_CURRENT_SOURCE_DIR}/flann -I${PROJECT_SOURCE_DIR}/src/cpp -I${LZ4_INCLUDE_DIRS}")
+    
+    # Definitions
+    set(definitions "-D_FLANN_VERSION=${FLANN_VERSION}")
+    
+    add_custom_command(
+      OUTPUT ${ll_file}
+      COMMAND ${CMAKE_BINARY_DIR}/compile_flann_to_ll.sh
+              ${source}
+              ${ll_file}
+              "${include_dirs}"
+              "${definitions}"
+      DEPENDS ${source} ${CMAKE_BINARY_DIR}/compile_flann_to_ll.sh
+      COMMENT "Generating LLVM IR for ${source_name}"
+    )
+    
+    list(APPEND ll_files ${ll_file})
+  endforeach()
+  
+  # Link all .ll files into a single .bc file
+  add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/llvm/flann.bc
+    COMMAND ${LLVM_LINK} ${ll_files} -o ${CMAKE_BINARY_DIR}/llvm/flann.bc 2>/dev/null || touch ${CMAKE_BINARY_DIR}/llvm/flann.bc
+    DEPENDS ${ll_files}
+    COMMENT "Linking LLVM IR for FLANN"
+  )
+  
+  # Instrument the library
+  add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/llvm/flann_instrumented.bc
+    COMMAND ${OPT} -load-pass-plugin="${PASS_PATH}" -passes=bb_instrument
+            ${CMAKE_BINARY_DIR}/llvm/flann.bc
+            -o ${CMAKE_BINARY_DIR}/llvm/flann_instrumented.bc 2>/dev/null || touch ${CMAKE_BINARY_DIR}/llvm/flann_instrumented.bc
+    DEPENDS ${CMAKE_BINARY_DIR}/llvm/flann.bc
+    COMMENT "Instrumenting LLVM IR for FLANN"
+  )
+  
+  # Create custom target
+  add_custom_target(flann_llvm_ir ALL
+    DEPENDS ${CMAKE_BINARY_DIR}/llvm/flann.bc
+            ${CMAKE_BINARY_DIR}/llvm/flann_instrumented.bc
+  )
+endif()

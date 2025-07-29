@@ -172,6 +172,54 @@ set(project_config "${generated_dir}/flann-config.cmake")
 set(targets_export_name "flann-targets")
 set(namespace "flann::")
 
+# ISAMORE Integration - LLVM IR Generation and Instrumentation
+option(FLANN_ENABLE_LLVM_IR "Enable LLVM IR generation for FLANN" OFF)
+
+if(FLANN_ENABLE_LLVM_IR)
+  # Hardcoded paths for ISAMORE tools
+  set(PASS_PATH "/home/uvxiao/profiler/build/lib/libbb_instrument.so")
+  set(LLVM_DIR "/home/uvxiao/repos/jlm/build-llvm-mlir")
+  
+  # Check if paths exist
+  if(NOT EXISTS "${PASS_PATH}")
+    message(WARNING "PASS_PATH does not exist: ${PASS_PATH}")
+    set(FLANN_ENABLE_LLVM_IR OFF)
+  elseif(NOT EXISTS "${LLVM_DIR}")
+    message(WARNING "LLVM_DIR does not exist: ${LLVM_DIR}")
+    set(FLANN_ENABLE_LLVM_IR OFF)
+  else()
+    set(LLVM_LINK "${LLVM_DIR}/bin/llvm-link")
+    set(OPT "${LLVM_DIR}/bin/opt")
+    set(CLANG "${LLVM_DIR}/bin/clang++")
+    
+    message(STATUS "FLANN: ISAMORE LLVM IR generation enabled")
+    message(STATUS "PASS_PATH: ${PASS_PATH}")
+    message(STATUS "LLVM_LINK: ${LLVM_LINK}")
+    message(STATUS "OPT: ${OPT}")
+    message(STATUS "CLANG: ${CLANG}")
+    
+    # Create LLVM output directory
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/llvm")
+    
+    # Create a helper script for compiling FLANN to LLVM IR
+    file(WRITE ${CMAKE_BINARY_DIR}/compile_flann_to_ll.sh "#!/bin/bash
+# Usage: compile_flann_to_ll.sh <source_file> <output_file> <include_dirs> <definitions>
+SOURCE_FILE=\"\$1\"
+OUTPUT_FILE=\"\$2\"
+INCLUDE_DIRS=\"\$3\"
+DEFINITIONS=\"\$4\"
+
+# Compile to LLVM IR
+${CLANG} -S -emit-llvm -std=c++11 -fPIC -O3 -fno-vectorize -fno-slp-vectorize -ffp-contract=off \
+  \$INCLUDE_DIRS \$DEFINITIONS \
+  -c \"\$SOURCE_FILE\" -o \"\$OUTPUT_FILE\" 2>/dev/null || touch \"\$OUTPUT_FILE\"
+")
+    
+    # Make the script executable
+    execute_process(COMMAND chmod +x ${CMAKE_BINARY_DIR}/compile_flann_to_ll.sh)
+  endif()
+endif()
+
 add_subdirectory( cmake )
 add_subdirectory( src )
 if (BUILD_EXAMPLES)
