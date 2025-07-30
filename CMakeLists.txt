@@ -192,11 +192,17 @@ if(FLANN_ENABLE_LLVM_IR)
     set(OPT "${LLVM_DIR}/bin/opt")
     set(CLANG "${LLVM_DIR}/bin/clang++")
     
+    # Set LZ4 paths for local installation
+    set(LZ4_INCLUDE_DIRS "$ENV{HOME}/.local/include")
+    set(LZ4_LIBRARIES "$ENV{HOME}/.local/lib/liblz4.so")
+    
     message(STATUS "FLANN: ISAMORE LLVM IR generation enabled")
     message(STATUS "PASS_PATH: ${PASS_PATH}")
     message(STATUS "LLVM_LINK: ${LLVM_LINK}")
     message(STATUS "OPT: ${OPT}")
     message(STATUS "CLANG: ${CLANG}")
+    message(STATUS "LZ4_INCLUDE_DIRS: ${LZ4_INCLUDE_DIRS}")
+    message(STATUS "LZ4_LIBRARIES: ${LZ4_LIBRARIES}")
     
     # Create LLVM output directory
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/llvm")

@@ -166,7 +166,7 @@ if(FLANN_ENABLE_LLVM_IR)
   # Link all .ll files into a single .bc file
   add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/llvm/flann.bc
-    COMMAND ${LLVM_LINK} ${ll_files} -o ${CMAKE_BINARY_DIR}/llvm/flann.bc 2>/dev/null || touch ${CMAKE_BINARY_DIR}/llvm/flann.bc
+    COMMAND ${LLVM_LINK} ${ll_files} -o ${CMAKE_BINARY_DIR}/llvm/flann.bc
     DEPENDS ${ll_files}
     COMMENT "Linking LLVM IR for FLANN"
   )
@@ -176,7 +176,7 @@ if(FLANN_ENABLE_LLVM_IR)
     OUTPUT ${CMAKE_BINARY_DIR}/llvm/flann_instrumented.bc
     COMMAND ${OPT} -load-pass-plugin="${PASS_PATH}" -passes=bb_instrument
             ${CMAKE_BINARY_DIR}/llvm/flann.bc
-            -o ${CMAKE_BINARY_DIR}/llvm/flann_instrumented.bc 2>/dev/null || touch ${CMAKE_BINARY_DIR}/llvm/flann_instrumented.bc
+            -o ${CMAKE_BINARY_DIR}/llvm/flann_instrumented.bc
     DEPENDS ${CMAKE_BINARY_DIR}/llvm/flann.bc
     COMMENT "Instrumenting LLVM IR for FLANN"
   )
