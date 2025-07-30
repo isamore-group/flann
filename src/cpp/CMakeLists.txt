@@ -173,8 +173,9 @@ if(FLANN_ENABLE_LLVM_IR)
   
   # Instrument the library
   add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/llvm/flann_instrumented.bc
+    OUTPUT ${CMAKE_BINARY_DIR}/llvm/flann_instrumented.bc ${CMAKE_BINARY_DIR}/llvm/flann_counts.csv
     COMMAND ${OPT} -load-pass-plugin="${PASS_PATH}" -passes=bb_instrument
+            -count-file ${CMAKE_BINARY_DIR}/llvm/flann_counts.csv
             ${CMAKE_BINARY_DIR}/llvm/flann.bc
             -o ${CMAKE_BINARY_DIR}/llvm/flann_instrumented.bc
     DEPENDS ${CMAKE_BINARY_DIR}/llvm/flann.bc
@@ -185,5 +186,6 @@ if(FLANN_ENABLE_LLVM_IR)
   add_custom_target(flann_llvm_ir ALL
     DEPENDS ${CMAKE_BINARY_DIR}/llvm/flann.bc
             ${CMAKE_BINARY_DIR}/llvm/flann_instrumented.bc
+            ${CMAKE_BINARY_DIR}/llvm/flann_counts.csv
   )
 endif()
