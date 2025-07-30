@@ -210,9 +210,18 @@ INCLUDE_DIRS=\"\$3\"
 DEFINITIONS=\"\$4\"
 
 # Compile to LLVM IR
+TEMP_FILE=\"\${OUTPUT_FILE}.tmp\"
 ${CLANG} -S -emit-llvm -std=c++11 -fPIC -O3 -fno-vectorize -fno-slp-vectorize -ffp-contract=off \
   \$INCLUDE_DIRS \$DEFINITIONS \
-  -c \"\$SOURCE_FILE\" -o \"\$OUTPUT_FILE\" 2>/dev/null || touch \"\$OUTPUT_FILE\"
+  -c \"\$SOURCE_FILE\" -o \"\$TEMP_FILE\" 2>/dev/null || touch \"\$TEMP_FILE\"
+
+# Apply lower-invoke pass to remove invoke instructions (required for jlm)
+if [ -s \"\$TEMP_FILE\" ]; then
+  ${OPT} -S -passes=lowerinvoke \"\$TEMP_FILE\" -o \"\$OUTPUT_FILE\" 2>/dev/null || cp \"\$TEMP_FILE\" \"\$OUTPUT_FILE\"
+  rm -f \"\$TEMP_FILE\"
+else
+  touch \"\$OUTPUT_FILE\"
+fi
 ")
     
     # Make the script executable
