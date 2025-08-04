@@ -248,9 +248,16 @@ if (INSTRUMENTATION_ENABLED)
         DESTINATION ${FLANN_LIB_INSTALL_DIR}
     )
     
-    # Create a dummy target to satisfy the export requirement
-    add_library(flann_cpp_dummy INTERFACE)
-    install(TARGETS flann_cpp_dummy EXPORT ${targets_export_name})
+    # Create an interface target that properly represents the instrumented library
+    add_library(flann_cpp_export INTERFACE)
+    # Set the library properties so it can be found
+    set_target_properties(flann_cpp_export PROPERTIES
+        INTERFACE_LINK_LIBRARIES "${CMAKE_INSTALL_PREFIX}/${FLANN_LIB_INSTALL_DIR}/libflann_cpp.so"
+        INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/include"
+    )
+    # Create alias so PCL can find it as flann_cpp
+    add_library(flann::flann_cpp ALIAS flann_cpp_export)
+    install(TARGETS flann_cpp_export EXPORT ${targets_export_name})
 else()
     install (
         TARGETS ${flann_install_targets}
