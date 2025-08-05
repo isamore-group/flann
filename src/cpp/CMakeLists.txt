@@ -41,7 +41,8 @@ foreach(cpp_source ${CPP_SOURCES})
     # Compile to LLVM IR
     add_custom_command(
         OUTPUT ${ll_file}
-        COMMAND ${CLANG} -S -emit-llvm -std=c++17 -fPIC -O3 -DFLANN_USE_LZ4 
+        COMMAND ${CLANG} -S -emit-llvm -std=c++17 -fPIC -O2 -DFLANN_USE_LZ4 
+                -fno-vectorize -fno-slp-vectorize -ffp-contract=off -mno-avx -mno-avx2 -mno-avx512f -mno-fma
                 -I${CMAKE_SOURCE_DIR}/src/cpp -I${CMAKE_SOURCE_DIR}/include 
                 -I/home/uvxiao/.local/include -c ${cpp_source} -o ${ll_file}
         DEPENDS ${cpp_source}
@@ -74,7 +75,8 @@ add_custom_command(
 # Step 3: Create shared library from instrumented bitcode with same name as non-instrumented
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/libflann_cpp.so.${FLANN_VERSION}
-    COMMAND ${CLANG} -shared -fPIC ${CMAKE_CURRENT_BINARY_DIR}/flann_cpp_instrumented.bc 
+    COMMAND ${CLANG} -shared -fPIC -fno-vectorize -fno-slp-vectorize -ffp-contract=off -mno-avx -mno-avx2 -mno-avx512f -mno-fma
+            ${CMAKE_CURRENT_BINARY_DIR}/flann_cpp_instrumented.bc 
             -o ${CMAKE_CURRENT_BINARY_DIR}/libflann_cpp.so.${FLANN_VERSION}
             -L/home/uvxiao/.local/lib -llz4
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/flann_cpp_instrumented.bc

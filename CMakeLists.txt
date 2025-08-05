@@ -134,6 +134,12 @@ if (USE_OPENMP)
     endif()
 endif()
 
+# Add gem5-compatible compiler flags to disable modern instruction sets
+set(GEM5_COMPAT_FLAGS "-fno-vectorize -fno-slp-vectorize -ffp-contract=off -mno-avx -mno-avx2 -mno-avx512f -mno-fma")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${GEM5_COMPAT_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GEM5_COMPAT_FLAGS}")
+message(STATUS "Added gem5-compatible flags: ${GEM5_COMPAT_FLAGS}")
+
 
 # CUDA support
 if (BUILD_CUDA_LIB)
