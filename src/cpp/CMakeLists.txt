@@ -48,10 +48,10 @@ foreach(cpp_source ${CPP_SOURCES})
         DEPENDS ${cpp_source}
     )
     
-    # Instrument LLVM IR
+    # Instrument LLVM IR with just-count mode
     add_custom_command(
         OUTPUT ${ll_instrumented_file}
-        COMMAND ${OPT} -load-pass-plugin="${PASS_PATH}" -passes=bb_instrument ${ll_file} -o ${ll_instrumented_file}
+        COMMAND ${OPT} -load-pass-plugin="${PASS_PATH}" -passes=bb_instrument -just-count ${ll_file} -o ${ll_instrumented_file}
         DEPENDS ${ll_file}
     )
     
